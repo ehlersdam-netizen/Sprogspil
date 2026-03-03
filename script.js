@@ -1036,19 +1036,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
         allButtons.forEach((btn) => {
           btn.disabled = true;
-
           if (btn.textContent === q.answer) {
             btn.classList.add("correct");
           }
         });
 
-        // Marker kun det valgte som forkert (hvis det er forkert)
+        // Hvis forkert → marker og lad dem trykke “Næste”
         if (opt !== q.answer) {
           button.classList.add("wrong");
+          nextBtn.disabled = false;
+          nextBtn.focus();
+          return;
         }
 
-        nextBtn.disabled = false;
-        nextBtn.focus();
+        // Hvis korrekt → auto videre efter 700ms
+        setTimeout(() => {
+          currentQuestion = (currentQuestion + 1) % sentences.length;
+          loadQuestion();
+        }, 700);
       });
 
       answersEl.appendChild(button);
