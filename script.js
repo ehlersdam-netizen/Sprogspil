@@ -1013,12 +1013,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadQuestion() {
     const q = sentences[currentQuestion];
+
     answered = false;
+    nextBtn.disabled = true;
+    nextBtn.blur();
 
     questionEl.textContent = q.sentence;
     answersEl.innerHTML = "";
-
-    nextBtn.disabled = true; // 🔒 disable næste
 
     const shuffled = [...q.options].sort(() => Math.random() - 0.5);
 
@@ -1033,19 +1034,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const allButtons = answersEl.querySelectorAll("button");
 
-        allButtons.forEach(btn => {
+        allButtons.forEach((btn) => {
           btn.disabled = true;
 
           if (btn.textContent === q.answer) {
             btn.classList.add("correct");
           }
-
-          if (btn.textContent === opt && opt !== q.answer) {
-            btn.classList.add("wrong");
-          }
         });
 
-        nextBtn.disabled = false; // 🔓 enable næste
+        // Marker kun det valgte som forkert (hvis det er forkert)
+        if (opt !== q.answer) {
+          button.classList.add("wrong");
+        }
+
+        nextBtn.disabled = false;
         nextBtn.focus();
       });
 
@@ -1054,6 +1056,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   nextBtn.addEventListener("click", () => {
+    if (!answered) return;
     currentQuestion = (currentQuestion + 1) % sentences.length;
     loadQuestion();
   });
