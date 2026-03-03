@@ -1001,6 +1001,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentQuestion = 0;
   let answered = false;
+  let timerId = null;
 
   const questionEl = document.getElementById("question");
   const answersEl = document.getElementById("answers");
@@ -1011,19 +1012,37 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  function goNext() {
+    currentQuestion = (currentQuestion + 1) % sentences.length;
+    loadQuestion();
+  }
+
   function loadQuestion() {
+    // stop evt. gammel auto-videre-timer
+    if (timerId) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+
     const q = sentences[currentQuestion];
+    if (!q || !Array.isArray(q.options)) {
+      console.error("FEJL: Spørgsmålet mangler 'options' eller er ugyldigt:", q);
+      return;
+    }
 
     answered = false;
-    nextBtn.disabled = true;
-    nextBtn.blur();
 
     questionEl.textContent = q.sentence;
     answersEl.innerHTML = "";
 
+    // “Næste” er kun relevant, hvis man svarer forkert
+    nextBtn.disabled = true;
+
     const shuffled = [...q.options].sort(() => Math.random() - 0.5);
 
-    shuffled.forEach((opt) => {
+    shuffled.forEach((optRaw) => {
+      const opt = String(optRaw);
+
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = opt;
@@ -1032,27 +1051,33 @@ document.addEventListener("DOMContentLoaded", () => {
         if (answered) return;
         answered = true;
 
-        const allButtons = answersEl.querySelectorAll("button");
+        const chosen = opt.trim();
+        const correct = String(q.answer).trim();
 
+        const allButtons = answersEl.querySelectorAll("button");
         allButtons.forEach((btn) => {
           btn.disabled = true;
-          if (btn.textContent === q.answer) {
+          if (btn.textContent.trim() === correct) {
             btn.classList.add("correct");
           }
         });
 
-        // Hvis forkert → marker og lad dem trykke “Næste”
-        if (opt !== q.answer) {
+        // Forkert → marker rød + enable “Næste”
+        if (chosen !== correct) {
           button.classList.add("wrong");
           nextBtn.disabled = false;
           nextBtn.focus();
           return;
         }
 
-        // Hvis korrekt → auto videre efter 700ms
-        setTimeout(() => {
-          currentQuestion = (currentQuestion + 1) % sentences.length;
-          loadQuestion();
+        // Korrekt → auto videre efter 700ms
+        timerId = setTimeout(() => {
+          try {
+            timerId = null;
+            goNext();
+          } catch (e) {
+            console.error("FEJL i auto-videre:", e);
+          }
         }, 700);
       });
 
@@ -1061,9 +1086,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   nextBtn.addEventListener("click", () => {
-    if (!answered) return;
-    currentQuestion = (currentQuestion + 1) % sentences.length;
-    loadQuestion();
+    if (nextBtn.disabled) return; // ekstra sikkerhed
+    goNext();
   });
 
   loadQuestion();
