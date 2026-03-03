@@ -994,8 +994,16 @@ const sentences = [
 // - tjekker at HTML-elementer findes
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (!Array.isArray(sentences) || sentences.length === 0) {
-    console.error("FEJL: 'sentences' er tom eller findes ikke.");
+  console.log("SCRIPT VERSION: 2026-03-03 — random15-noProgress");
+
+  // Robust adgang til sentences (nogle gange ligger den på window)
+  const data = (typeof sentences !== "undefined" ? sentences : window.sentences);
+
+  if (!Array.isArray(data) || data.length === 0) {
+    console.error(
+      "FEJL: 'sentences' er tom eller findes ikke. " +
+      "Tjek at sentences.js indlæses FØR script.js i index.html."
+    );
     return;
   }
 
@@ -1026,10 +1034,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function buildRound() {
-    const allIndices = Array.from({ length: sentences.length }, (_, i) => i);
+    const allIndices = Array.from({ length: data.length }, (_, i) => i);
     questionOrder = shuffleArray(allIndices).slice(
       0,
-      Math.min(MAX_QUESTIONS, sentences.length)
+      Math.min(MAX_QUESTIONS, data.length)
     );
     orderPos = 0;
 
@@ -1080,7 +1088,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const idx = questionOrder[orderPos];
-    const q = sentences[idx];
+    const q = data[idx];
 
     if (!q || !Array.isArray(q.options)) {
       console.error("FEJL: Spørgsmålet mangler 'options' eller er ugyldigt:", q);
@@ -1089,11 +1097,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     answered = false;
 
-    // Vis kun sætningen (ingen “Spørgsmål 6/15”)
+    // Kun sætningen (ingen progress)
     questionEl.textContent = q.sentence;
 
     answersEl.innerHTML = "";
-
     nextBtn.disabled = true;
 
     const shuffledOptions = shuffleArray(q.options.map(String));
